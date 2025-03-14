@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 import os
 from dotenv import load_dotenv
 import openai
@@ -10,7 +10,11 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+# Configure CORS to allow all origins, methods, and headers
+CORS(app, origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3002"], 
+     allow_headers=["Content-Type", "Authorization"],
+     supports_credentials=True,
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
 # Initialize Supabase client
 supabase_url = os.getenv("SUPABASE_URL")
@@ -21,11 +25,13 @@ supabase: Client = create_client(supabase_url, supabase_key)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route('/api/health', methods=['GET'])
+@cross_origin()
 def health_check():
     """Health check endpoint"""
     return jsonify({"status": "healthy"})
 
 @app.route('/api/chat', methods=['POST'])
+@cross_origin()
 def process_chat():
     """Process chat messages and generate responses"""
     data = request.json
@@ -69,6 +75,7 @@ def process_chat():
         }), 500
 
 @app.route('/api/generate-sequence', methods=['POST'])
+@cross_origin()
 def generate_sequence():
     """Generate a recruiting outreach sequence based on user inputs"""
     data = request.json
@@ -116,6 +123,7 @@ def generate_sequence():
         }), 500
 
 @app.route('/api/update-sequence', methods=['PUT'])
+@cross_origin()
 def update_sequence():
     """Update an existing sequence with user edits"""
     data = request.json
