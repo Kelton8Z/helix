@@ -11,10 +11,19 @@ load_dotenv()
 # Initialize Flask app
 app = Flask(__name__)
 # Configure CORS to allow all origins, methods, and headers
-CORS(app, origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3002"], 
+CORS(app, 
+     resources={r"/*": {"origins": "*"}},
      allow_headers=["Content-Type", "Authorization"],
      supports_credentials=True,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 # Initialize Supabase client
 supabase_url = os.getenv("SUPABASE_URL")
