@@ -59,3 +59,28 @@ CREATE POLICY "Users can insert their own sequences" ON sequences
 
 CREATE POLICY "Users can update their own sequences" ON sequences
     FOR UPDATE USING (auth.uid()::text = user_id);
+
+-- Create a function to check service status
+CREATE OR REPLACE FUNCTION get_service_status()
+RETURNS JSONB
+LANGUAGE SQL
+SECURITY DEFINER
+AS $$
+  SELECT jsonb_build_object(
+    'timestamp', NOW(),
+    'pg_version', version(),
+    'current_database', current_database(),
+    'current_schema', current_schema(),
+    'connection_info', jsonb_build_object(
+      'user', current_user,
+      'session_user', session_user,
+      'is_superuser', (SELECT usesuper FROM pg_user WHERE usename = current_user)
+    ),
+    'status', 'online'
+  );
+$$;
+
+-- Grant execute permission to authenticated users
+GRANT EXECUTE ON FUNCTION get_service_status() TO authenticated;
+GRANT EXECUTE ON FUNCTION get_service_status() TO anon;
+GRANT EXECUTE ON FUNCTION get_service_status() TO service_role;
