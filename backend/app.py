@@ -4,7 +4,8 @@ import os
 from dotenv import load_dotenv
 import openai
 from supabase import create_client, Client
-import google.generativeai as genai
+# import google.generativeai as genai
+from google import genai
 
 # Load environment variables
 load_dotenv()
@@ -21,7 +22,6 @@ CORS(app, origins="http://localhost:3000")
 
 @app.after_request
 def after_request(response):
-    # response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     response.headers.add('Access-Control-Allow-Credentials', 'true')
@@ -39,7 +39,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 print(f'OpenAI API key: {openai.api_key}')
 
 # Initialize Google Generative AI client
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+genai_client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 print(f'Google API key configured: {"Yes" if os.getenv("GOOGLE_API_KEY") else "No"}')
 
 @app.route('/api/health', methods=['GET'])
@@ -91,19 +91,7 @@ def process_chat():
                 print(f"OpenAI response received, length: {len(ai_message)}")
             elif model_provider.lower() == 'gemini':
                 # Generate AI response using Gemini
-                gemini_model = genai.GenerativeModel(model_name)
-                gemini_response = gemini_model.generate_content(
-                    [
-                        genai.types.Content(
-                            parts=[genai.types.Part(text="You are Helix, a recruiting outreach assistant. Help the user create effective outreach sequences.")],
-                            role="user"
-                        ),
-                        genai.types.Content(
-                            parts=[genai.types.Part(text=user_message)],
-                            role="user"
-                        )
-                    ]
-                )
+                gemini_response = genai_client.models.generate_content(model="gemini-2.0-flash", contents=user_message)
                 ai_message = gemini_response.text
                 print(f"Gemini response received, length: {len(ai_message)}")
             else:
@@ -168,18 +156,9 @@ def generate_sequence():
             sequence = response.choices[0].message.content
         elif model_provider.lower() == 'gemini':
             # Generate sequence using Gemini
-            gemini_model = genai.GenerativeModel(model_name)
-            gemini_response = gemini_model.generate_content(
-                [
-                    genai.types.Content(
-                        parts=[genai.types.Part(text="You are Helix, a recruiting outreach assistant. Generate a step-by-step outreach sequence based on the provided context.")],
-                        role="user"
-                    ),
-                    genai.types.Content(
-                        parts=[genai.types.Part(text=f"Generate a recruiting outreach sequence based on this context: {context}")],
-                        role="user"
-                    )
-                ]
+            gemini_response = genai_client.models.generate_content(
+    model="gemini-2.0-flash", 
+    contents=f"Generate a recruiting outreach sequence based on this context: {context}"
             )
             sequence = gemini_response.text
         else:
@@ -212,6 +191,7 @@ def generate_sequence():
             "status": "success"
         })
     except Exception as e:
+        print(e)
         return jsonify({
             "error": str(e),
             "status": "error"
@@ -288,8 +268,8 @@ def test_gemini():
         
         # Try a simple completion to test the API key
         try:
-            gemini_model = genai.GenerativeModel('gemini-2.0-flash')
-            response = gemini_model.generate_content("Say hello")
+            response = genai_client.models.generate_content(
+    model="gemini-2.0-flash", contents = "Say hello")
             
             return jsonify({
                 "status": "success",
