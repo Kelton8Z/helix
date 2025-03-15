@@ -39,11 +39,6 @@ BEFORE UPDATE ON sequences
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
--- Create RLS (Row Level Security) policies
--- Enable RLS on tables
-ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
-ALTER TABLE sequences ENABLE ROW LEVEL SECURITY;
-
 -- Create policies for authenticated users
 CREATE POLICY "Users can view their own messages" ON messages
     FOR SELECT USING (auth.uid()::text = user_id);
