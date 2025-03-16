@@ -16,6 +16,9 @@ Helix is a fictional prototype of the SellScale HR Agent that includes a chat-dr
 
 3. **Live Updates**: The AI dynamically updates the recruiting sequence in real-time as the user interacts with the chat or the workspace.
 
+![Helix Demo](./demo.png)
+
+
 ## Getting Started
 
 ### Prerequisites
@@ -46,4 +49,4 @@ Helix is a fictional prototype of the SellScale HR Agent that includes a chat-dr
 - Frontend: React, TypeScript
 - Backend: Python Flask
 - Database: Supabase (PostgreSQL)
-- AI: OpenAI Assistants API
+- AI: OpenAI & Gemini API
