@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 import os
+import logging
 from dotenv import load_dotenv
 import openai
 from supabase import create_client, Client
@@ -12,6 +13,8 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
+app.logger.setLevel(logging.DEBUG)  # Add this line
+logging.getLogger('werkzeug').setLevel(logging.DEBUG) 
 # Configure CORS to allow all origins, methods, and headers
 # CORS(app,
 #      resources={r"/*": {"origins": "*"}},
@@ -41,6 +44,25 @@ print(f'OpenAI API key: {openai.api_key}')
 # Initialize Google Generative AI client
 genai_client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 print(f'Google API key configured: {"Yes" if os.getenv("GOOGLE_API_KEY") else "No"}')
+
+# Define the response schema for structured output
+SEQUENCE_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "steps": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "step": {"type": "string"},
+                    "content": {"type": "string"}
+                },
+                "required": ["step", "content"]
+            }
+        }
+    },
+    "required": ["steps"]
+}
 
 @app.route('/api/health', methods=['GET'])
 @cross_origin()
@@ -90,6 +112,7 @@ def process_chat():
                 ai_message = openai_response.choices[0].message.content
                 print(f"OpenAI response received, length: {len(ai_message)}")
             elif model_provider.lower() == 'gemini':
+                app.logger.info("Entering Gemini branch")
                 # Generate AI response using Gemini
                 gemini_response = genai_client.models.generate_content(model="gemini-2.0-flash", contents=user_message)
                 ai_message = gemini_response.text
@@ -155,29 +178,32 @@ def generate_sequence():
             )
             sequence = response.choices[0].message.content
         elif model_provider.lower() == 'gemini':
-            # Generate sequence using Gemini
+            app.logger.info("Entering Gemini branch")
+            # Generate sequence using Gemini with structured output
             gemini_response = genai_client.models.generate_content(
-    model="gemini-2.0-flash", 
-    contents=f"Generate a recruiting outreach sequence based on this context: {context}"
+                model="gemini-2.0-flash",
+                contents={
+                    "role": "assistant",
+                    "parts": [{
+                        "text": f"Generate a recruiting outreach sequence based on this context: {context}"
+                    }]
+                },
+                config={
+                    "temperature": 0.7,
+                    "response_mime_type": "application/json",
+                    "responseSchema": SEQUENCE_SCHEMA
+                }
             )
-            sequence = gemini_response.text
+            app.logger.info(f"Got Gemini response: {gemini_response}")
+            # Extract steps directly from the parsed field
+            steps = gemini_response.parsed.get('steps', [])
+            app.logger.info(f"Generated {len(steps)} steps from Gemini")
         else:
             return jsonify({
                 "error": f"Unsupported model provider: {model_provider}",
                 "status": "error",
                 "source": "model_selection"
             }), 400
-        
-        # Parse the sequence into steps (assuming the AI returns a formatted sequence)
-        # In a real implementation, you'd want more robust parsing
-        steps = []
-        for line in sequence.split('\n'):
-            if line.strip().startswith('Step'):
-                parts = line.split(':', 1)
-                if len(parts) > 1:
-                    step_num = parts[0].replace('Step', '').strip()
-                    step_content = parts[1].strip()
-                    steps.append({"step": step_num, "content": step_content})
         
         # Store the sequence in Supabase
         supabase.table('sequences').insert({
