@@ -68,6 +68,7 @@ const StepContent = styled.textarea`
   font-family: inherit;
   font-size: inherit;
   line-height: 1.5;
+  overflow: auto;
   
   &:focus {
     outline: none;

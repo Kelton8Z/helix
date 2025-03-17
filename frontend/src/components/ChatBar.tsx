@@ -42,6 +42,9 @@ const MessageBubble = styled.div<{ isUser: boolean }>`
   align-self: ${(props) => (props.isUser ? 'flex-end' : 'flex-start')};
   background-color: ${(props) => (props.isUser ? '#007bff' : '#f1f1f1')};
   color: ${(props) => (props.isUser ? 'white' : 'black')};
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
 `;
 
 const StatusMessage = styled.div`
