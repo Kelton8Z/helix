@@ -33,11 +33,17 @@ const MainContent = styled.main`
   flex: 1;
   gap: 20px;
   height: calc(100% - 80px);
+  min-height: 0;
 `;
 
 const Column = styled.div`
-  flex: 1;
+  flex: 1 0 0;
+  width: 50%;
+  max-width: 50%;
   height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 `;
 
 function App() {

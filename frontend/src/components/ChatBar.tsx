@@ -28,9 +28,11 @@ const MessagesContainer = styled.div`
   flex: 1;
   padding: 10px;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-height: 0;
 `;
 
 const MessageBubble = styled.div<{ isUser: boolean }>`
