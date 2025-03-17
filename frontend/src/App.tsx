@@ -72,7 +72,6 @@ function App() {
       setMessages(prev => [...prev, aiMessage]);
       
       // Check if we should generate a sequence based on the conversation
-      if (messages.length >= 2 && !sequence) {
         // Extract context from messages
         const context = {
           messages: [...messages, userMessage, aiMessage].map(m => ({ content: m.content, type: m.type })),
@@ -110,7 +109,6 @@ function App() {
             type: 'status' 
           }]);
         }
-      }
     } catch (error) {
       console.error('Error:', error);
       setMessages(prev => [...prev, { content: 'An error occurred. Please try again.', type: 'status' }]);
@@ -119,20 +117,19 @@ function App() {
     }
   };
 
-  const handleUpdateSequence = async (steps: SequenceStep[]) => {
+  const handleUpdateSequence = (updatedSteps: SequenceStep[]) => {
+    console.log("App received updated steps:", updatedSteps);
+    
     if (!sequence) return;
     
-    // Update local state immediately
-    setSequence(prev => prev ? { ...prev, steps } : null);
+    // Update local state
+    setSequence({
+      ...sequence,
+      steps: updatedSteps
+    });
     
-    // Send update to backend
-    if (sequence.id) {
-      try {
-        await updateSequence(sequence.id, steps);
-      } catch (error) {
-        console.error('Error updating sequence:', error);
-      }
-    }
+    // Optionally save to backend
+    // saveSequenceToBackend(sequence.id, updatedSteps);
   };
 
   const handleTestOpenAI = async () => {
