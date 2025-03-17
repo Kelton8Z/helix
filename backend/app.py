@@ -7,6 +7,7 @@ import openai
 from supabase import create_client, Client
 # import google.generativeai as genai
 from google import genai
+from google.genai import types
 
 # Load environment variables
 load_dotenv()
@@ -98,7 +99,7 @@ def process_chat():
             }), 500
         
         # Generate AI response using selected model provider
-        prompt = '''You are Helix, a sales outreach assistant. Help the user create effective sales sequences and messages that are personalized, empathetic, and focused on providing value to potential customers.
+        system_prompt = '''You are Helix, a sales outreach assistant. Help the user create effective sales sequences and messages that are personalized, empathetic, and focused on providing value to potential customers.
         A sales sequence, also referred to as a sales cadence, is a scheduled series of sales touchpoints that include phone calls, emails, social messages, and SMS messages, as well as other tasks that are delivered at a pre-defined interval over a particular period of time. 
         The goal of a sales sequence is to generate a conversation with qualified prospects and set meetings for further discussions. 
         Typically, sales development reps use sequences to schedule and manage their outreach to leads and prospects. 
@@ -125,7 +126,7 @@ def process_chat():
                 openai_response = openai.chat.completions.create(
                     model=model_name,
                     messages=[
-                        {"role": "system", "content": prompt},
+                        {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_message}
                     ]
                 )
@@ -134,7 +135,10 @@ def process_chat():
             elif model_provider.lower() == 'gemini':
                 app.logger.info("Entering Gemini branch")
                 # Generate AI response using Gemini
-                gemini_response = genai_client.models.generate_content(model="gemini-2.0-flash", contents=user_message)
+                gemini_response = genai_client.models.generate_content(
+                    model="gemini-2.0-flash", 
+                    config=types.GenerateContentConfig(system_instruction=system_prompt),
+                    contents=user_message)
                 ai_message = gemini_response.text
                 print(f"Gemini response received, length: {len(ai_message)}")
             else:
