@@ -98,6 +98,26 @@ def process_chat():
             }), 500
         
         # Generate AI response using selected model provider
+        prompt = '''You are Helix, a sales outreach assistant. Help the user create effective sales sequences and messages that are personalized, empathetic, and focused on providing value to potential customers.
+        A sales sequence, also referred to as a sales cadence, is a scheduled series of sales touchpoints that include phone calls, emails, social messages, and SMS messages, as well as other tasks that are delivered at a pre-defined interval over a particular period of time. 
+        The goal of a sales sequence is to generate a conversation with qualified prospects and set meetings for further discussions. 
+        Typically, sales development reps use sequences to schedule and manage their outreach to leads and prospects. 
+        Here's an example Sequence
+
+        Step 1:
+        Hi {{first_name}} - I've been keeping up with the news in LA. I hope you and your family are safe. Let us know if we can help in any way.
+
+        Step 2:
+        I work at Trajillo Tech - we release a new government aid program for homeowners affected by the wildfires. Up to $2mil in aid. Let me know if you'd like to learn more.
+
+        Step 3:
+        Also .. it's a fully government supported program. No cost or burden to you whatsoever.
+
+        Let me know!
+
+        Step 4:
+        {{first_name}} - let me know if I can help! I'm here to serve as a resource.
+        '''
         try:
             ai_message = ""
             if model_provider.lower() == 'openai':
@@ -105,7 +125,7 @@ def process_chat():
                 openai_response = openai.chat.completions.create(
                     model=model_name,
                     messages=[
-                        {"role": "system", "content": "You are Helix, a recruiting outreach assistant. Help the user create effective outreach sequences."},
+                        {"role": "system", "content": prompt},
                         {"role": "user", "content": user_message}
                     ]
                 )
@@ -157,7 +177,7 @@ def process_chat():
 @app.route('/api/generate-sequence', methods=['POST'])
 @cross_origin()
 def generate_sequence():
-    """Generate a recruiting outreach sequence based on user inputs"""
+    """Generate a sales outreach sequence based on user inputs"""
     data = request.json
     context = data.get('context', {})
     user_id = data.get('userId', 'anonymous')
@@ -172,8 +192,8 @@ def generate_sequence():
             response = openai.chat.completions.create(
                 model=model_name,
                 messages=[
-                    {"role": "system", "content": "You are Helix, a recruiting outreach assistant. Generate a step-by-step outreach sequence based on the provided context."},
-                    {"role": "user", "content": f"Generate a recruiting outreach sequence based on this context: {context}"}
+                    {"role": "system", "content": "You are Helix, a sales outreach assistant. Generate a step-by-step sales sequence based on the provided context. Each step should be personalized, empathetic, and focused on providing value to potential customers."},
+                    {"role": "user", "content": f"Generate a sales outreach sequence based on this context: {context}"}
                 ]
             )
             sequence = response.choices[0].message.content
@@ -185,7 +205,7 @@ def generate_sequence():
                 contents={
                     "role": "assistant",
                     "parts": [{
-                        "text": f"Generate a recruiting outreach sequence based on this context: {context}"
+                        "text": f"Generate a sales outreach sequence based on this context: {context}"
                     }]
                 },
                 config={
